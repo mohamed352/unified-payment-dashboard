@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 let Redis;
 try {
@@ -37,11 +39,38 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_
 if (Redis && REDIS_URL && REDIS_TOKEN) {
   redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
   console.log('[SessionStore] Using Upstash Redis.');
+} else if (process.env.VERCEL) {
+  console.log('[SessionStore] Using /tmp file session store.');
 } else {
   console.log('[SessionStore] Using in-memory session store.');
 }
 
+const TMP_FILE = '/tmp/unified-sessions.json';
 const memory = new Map();
+
+function readTmpStore() {
+  try {
+    if (!fs.existsSync(TMP_FILE)) return {};
+    return JSON.parse(fs.readFileSync(TMP_FILE, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function writeTmpStore(store) {
+  try {
+    fs.writeFileSync(TMP_FILE, JSON.stringify(store));
+  } catch (err) {
+    console.error('[SessionStore] /tmp write failed:', err.message);
+  }
+}
+
+function tmpCleanup(store) {
+  const cutoff = Date.now() - SESSION_TTL_SECONDS * 1000;
+  for (const id of Object.keys(store)) {
+    if (store[id].createdAt < cutoff) delete store[id];
+  }
+}
 
 function memoryCleanup() {
   const cutoff = Date.now() - SESSION_TTL_SECONDS * 1000;
@@ -56,6 +85,11 @@ async function createSession(obj) {
   const encrypted = encrypt(JSON.stringify(obj));
   if (redis) {
     await redis.set(`unified:session:${id}`, encrypted, { ex: SESSION_TTL_SECONDS });
+  } else if (process.env.VERCEL) {
+    const store = readTmpStore();
+    tmpCleanup(store);
+    store[id] = { data: encrypted, createdAt: Date.now() };
+    writeTmpStore(store);
   } else {
     memory.set(id, { data: encrypted, createdAt: Date.now() });
   }
@@ -66,6 +100,12 @@ async function getSession(id) {
   let encrypted;
   if (redis) {
     encrypted = await redis.get(`unified:session:${id}`);
+  } else if (process.env.VERCEL) {
+    const store = readTmpStore();
+    const item = store[id];
+    if (item && Date.now() - item.createdAt < SESSION_TTL_SECONDS * 1000) {
+      encrypted = item.data;
+    }
   } else {
     const item = memory.get(id);
     if (item && Date.now() - item.createdAt < SESSION_TTL_SECONDS * 1000) {
@@ -85,6 +125,11 @@ async function updateSession(id, obj) {
   const encrypted = encrypt(JSON.stringify(obj));
   if (redis) {
     await redis.set(`unified:session:${id}`, encrypted, { ex: SESSION_TTL_SECONDS });
+  } else if (process.env.VERCEL) {
+    const store = readTmpStore();
+    tmpCleanup(store);
+    store[id] = { data: encrypted, createdAt: Date.now() };
+    writeTmpStore(store);
   } else {
     memory.set(id, { data: encrypted, createdAt: Date.now() });
   }
@@ -92,6 +137,11 @@ async function updateSession(id, obj) {
 
 async function deleteSession(id) {
   if (redis) await redis.del(`unified:session:${id}`);
+  if (process.env.VERCEL) {
+    const store = readTmpStore();
+    delete store[id];
+    writeTmpStore(store);
+  }
   memory.delete(id);
 }
 

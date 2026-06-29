@@ -11,17 +11,17 @@ try {
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
+const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(__dirname, '..', 'data');
+const DATA_FILE = path.join(DATA_DIR, 'payments.json');
+const MAX_RECORDS = 1000;
+
 let redis = null;
 if (Redis && REDIS_URL && REDIS_TOKEN) {
   redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
   console.log('[PaymentStore] Using Upstash Redis.');
 } else {
-  console.log('[PaymentStore] Using local JSON file storage.');
+  console.log('[PaymentStore] Using local JSON file storage (' + DATA_FILE + ').');
 }
-
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const DATA_FILE = path.join(DATA_DIR, 'payments.json');
-const MAX_RECORDS = 1000;
 
 function ensureDataFile() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
