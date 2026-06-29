@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { align-items: flex-start; padding: 32px 16px; }
+    .dashboard { width: 100%; max-width: 1200px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #1e293b; padding: 18px; border-radius: 12px; text-align: center; }
+    .stat-card h3 { margin: 0; font-size: 28px; color: #38bdf8; }
+    .stat-card p { margin: 6px 0 0; color: #94a3b8; font-size: 13px; }
+    .filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filters select, .filters input { width: auto; margin: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { color: #94a3b8; font-weight: 600; }
+    td { color: #e2e8f0; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .badge.success { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge.failed { background: rgba(239,68,68,0.15); color: #f87171; }
+    .badge.pending { background: rgba(234,179,8,0.15); color: #facc15; }
+    .empty { text-align: center; padding: 40px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <div>
+        <h1>Payment Dashboard</h1>
+        <p class="subtitle">Track every payment attempt across Payone, PayTabs and Payzaty</p>
+      </div>
+      <a href="/" style="text-decoration:none"><button style="width:auto;padding:10px 18px">New Payment</button></a>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat-card"><h3 id="statTotal">0</h3><p>Total Attempts</p></div>
+      <div class="stat-card"><h3 id="statSuccess">0</h3><p>Successful</p></div>
+      <div class="stat-card"><h3 id="statFailed">0</h3><p>Failed</p></div>
+      <div class="stat-card"><h3 id="statPending">0</h3><p>Pending</p></div>
+      <div class="stat-card"><h3 id="statRate">0%</h3><p>Success Rate</p></div>
+    </div>
+
+    <div class="filters">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="success">Success</option>
+        <option value="failed">Failed</option>
+        <option value="pending">Pending</option>
+      </select>
+      <select id="gatewayFilter">
+        <option value="">All gateways</option>
+        <option value="payone">Payone</option>
+        <option value="paytabs">PayTabs</option>
+        <option value="payzaty">Payzaty</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Search reference, country, card...">
+      <button onclick="loadData()" style="width:auto;padding:10px 18px">Refresh</button>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Amount</th>
+            <th>Gateway</th>
+            <th>Status</th>
+            <th>Country</th>
+            <th>Card</th>
+            <th>Time</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody id="paymentsBody">
+          <tr><td colspan="8" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let allPayments = [];
+
+    function fmtMoney(amount) {
+      return Number(amount).toFixed(2) + ' SAR';
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString();
+    }
+
+    function badgeClass(status) {
+      if (status === 'success') return 'success';
+      if (status === 'failed') return 'failed';
+      return 'pending';
+    }
+
+    function renderStats(stats) {
+      document.getElementById('statTotal').textContent = stats.total;
+      document.getElementById('statSuccess').textContent = stats.success;
+      document.getElementById('statFailed').textContent = stats.failed;
+      document.getElementById('statPending').textContent = stats.pending;
+      const rate = stats.total ? Math.round((stats.success / stats.total) * 100) : 0;
+      document.getElementById('statRate').textContent = rate + '%';
+    }
+
+    function renderTable() {
+      const statusFilter = document.getElementById('statusFilter').value;
+      const gatewayFilter = document.getElementById('gatewayFilter').value;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      const filtered = allPayments.filter((p) => {
+        if (statusFilter && p.status !== statusFilter) return false;
+        if (gatewayFilter && p.gateway !== gatewayFilter) return false;
+        if (search) {
+          const hay = `${p.reference} ${p.country} ${p.cardBin} ${p.cardLast4} ${p.cardHolder} ${p.message}`.toLowerCase();
+          if (!hay.includes(search)) return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById('paymentsBody');
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No payments found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((p) => `
+        <tr>
+          <td>${escapeHtml(p.reference)}</td>
+          <td>${fmtMoney(p.amount)}</td>
+          <td>${escapeHtml(p.gateway || '—')}</td>
+          <td><span class="badge ${badgeClass(p.status)}">${escapeHtml(p.status)}</span></td>
+          <td>${escapeHtml(p.country || '—')}</td>
+          <td>${escapeHtml(p.cardBin || '')}••••${escapeHtml(p.cardLast4 || '')}</td>
+          <td>${fmtTime(p.createdAt)}</td>
+          <td>${escapeHtml(p.message || '—')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function loadData() {
+      try {
+        const [statsRes, paymentsRes] = await Promise.all([
+          fetch('/api/dashboard/stats'),
+          fetch('/api/dashboard/payments?limit=200'),
+        ]);
+        const statsData = await statsRes.json();
+        const paymentsData = await paymentsRes.json();
+
+        if (statsData.success) renderStats(statsData.stats);
+        if (paymentsData.success) {
+          allPayments = paymentsData.payments;
+          renderTable();
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('paymentsBody').innerHTML = '<tr><td colspan="8" class="empty">Error loading data</td></tr>';
+      }
+    }
+
+    document.getElementById('statusFilter').addEventListener('change', renderTable);
+    document.getElementById('gatewayFilter').addEventListener('change', renderTable);
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+
+    loadData();
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>

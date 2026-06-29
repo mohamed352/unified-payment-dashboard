@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processing Payment</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card spinner-wrap">
+    <div class="spinner"></div>
+    <h1>Processing...</h1>
+    <p id="statusText">Trying the next payment gateway.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('sessionId');
+
+    async function poll() {
+      if (!sessionId) return;
+      try {
+        const res = await fetch(`/api/session/${encodeURIComponent(sessionId)}/status`);
+        const data = await res.json();
+        if (data.type === 'done') {
+          if (data.success) {
+            location.href = `/result.html?status=success&gateway=${encodeURIComponent(data.gateway)}`;
+          } else {
+            location.href = '/result.html?status=failed';
+          }
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      setTimeout(poll, 2000);
+    }
+
+    poll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting to Bank</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card spinner-wrap">
+    <div class="spinner"></div>
+    <h1>3-D Secure Verification</h1>
+    <p>You are being redirected to your bank to complete the verification.</p>
+    <p style="font-size:12px;color:#64748b;margin-top:8px">If you are not redirected automatically, <a id="link" href="#" style="color:#38bdf8">click here</a>.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const url = params.get('url');
+    if (url) {
+      document.getElementById('link').href = url;
+      setTimeout(() => {
+        window.location.href = url;
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

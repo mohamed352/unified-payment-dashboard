@@ -1,0 +1,19 @@
+{
+  "name": "unified-payment",
+  "version": "1.0.0",
+  "description": "Unified auto-failover payment site for Payone, PayTabs and Payzaty",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

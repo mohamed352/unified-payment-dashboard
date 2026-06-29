@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Payment</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card" id="formCard">
+    <h1>Secure Payment</h1>
+    <p class="subtitle">Enter amount and card details. We will try Payone, PayTabs and Payzaty automatically.</p>
+
+    <form id="paymentForm">
+      <label for="amount">Amount (SAR)</label>
+      <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="100.00" required>
+
+      <label for="cardNumber">Card Number</label>
+      <input type="text" id="cardNumber" name="cardNumber" inputmode="numeric" maxlength="19" placeholder="4111 1111 1111 1111" required>
+
+      <div class="row">
+        <div>
+          <label for="expMonth">Expiry Month</label>
+          <input type="text" id="expMonth" name="expMonth" inputmode="numeric" maxlength="2" placeholder="MM" required>
+        </div>
+        <div>
+          <label for="expYear">Expiry Year</label>
+          <input type="text" id="expYear" name="expYear" inputmode="numeric" maxlength="4" placeholder="YYYY" required>
+        </div>
+        <div>
+          <label for="cvv">CVV</label>
+          <input type="text" id="cvv" name="cvv" inputmode="numeric" maxlength="4" placeholder="123" required>
+        </div>
+      </div>
+
+      <label for="cardHolder">Card Holder Name</label>
+      <input type="text" id="cardHolder" name="cardHolder" placeholder="John Doe" required>
+
+      <button type="submit" id="payBtn">Pay Now</button>
+      <div class="error" id="errorBox"></div>
+    </form>
+  </div>
+
+  <div class="card spinner-wrap" id="loadingCard" style="display:none">
+    <div class="spinner"></div>
+    <p id="loadingText">Starting payment...</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

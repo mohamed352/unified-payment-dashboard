@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Result</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card" id="resultCard">
+    <div class="status-icon" id="statusIcon">⏳</div>
+    <h1 id="title">Loading...</h1>
+    <p id="message"></p>
+    <div class="details" id="details"></div>
+    <button id="actionBtn" style="margin-top:24px" onclick="location.href='/'">Back to payment</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    const gateway = params.get('gateway');
+    const message = params.get('message');
+
+    const icon = document.getElementById('statusIcon');
+    const title = document.getElementById('title');
+    const msg = document.getElementById('message');
+    const details = document.getElementById('details');
+
+    if (status === 'success') {
+      icon.textContent = '✅';
+      title.textContent = 'Payment Successful';
+      msg.textContent = 'Your card was charged successfully.';
+      details.innerHTML = `<div>Gateway: <strong>${gateway ? escapeHtml(gateway) : '—'}</strong></div>`;
+    } else if (status === 'failed') {
+      icon.textContent = '❌';
+      title.textContent = 'Payment Failed';
+      msg.textContent = message ? decodeURIComponent(message) : 'We could not charge your card through any of the available gateways.';
+      details.innerHTML = `<div>Please check your card details and balance, then try again or use another card.</div>`;
+    } else {
+      icon.textContent = '⚠️';
+      title.textContent = 'Unknown Status';
+      msg.textContent = 'We could not determine the payment result.';
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>
