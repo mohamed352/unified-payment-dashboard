@@ -93,6 +93,8 @@ async function initiate(session, baseUrl) {
       data = { raw: responseText };
     }
 
+    console.log('[PayTabs] response:', JSON.stringify(data).substring(0, 1000));
+
     if (!response.ok || data.status === 'error') {
       return {
         status: 'failed',

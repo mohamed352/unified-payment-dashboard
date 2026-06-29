@@ -52,7 +52,7 @@ async function initiate(session, baseUrl) {
       number: card.number,
       expiry: {
         month: String(card.expMonth).padStart(2, '0'),
-        year: String(card.expYear),
+        year: String(card.expYear).slice(-2),
       },
       cvv: card.cvv,
     },
@@ -75,6 +75,8 @@ async function initiate(session, baseUrl) {
       data = { raw: responseText };
     }
 
+    console.log('[Payzaty] status:', response.status, 'response:', JSON.stringify(data).substring(0, 1000));
+
     if (!response.ok || data.error) {
       return {
         status: 'failed',
@@ -93,11 +95,12 @@ async function initiate(session, baseUrl) {
       };
     }
 
-    if (data.checkout_url || data.redirect_url) {
+    const redirectUrl = data.authentication_url || data.checkout_url || data.redirect_url;
+    if (redirectUrl) {
       return {
         status: 'redirect',
         gateway: 'payzaty',
-        redirectUrl: data.checkout_url || data.redirect_url,
+        redirectUrl,
         transactionRef: data.id || data.checkout_id,
         raw: data,
       };
