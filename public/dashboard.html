@@ -4,34 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { align-items: flex-start; padding: 32px 16px; }
-    .dashboard { width: 100%; max-width: 1200px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: #1e293b; padding: 18px; border-radius: 12px; text-align: center; }
-    .stat-card h3 { margin: 0; font-size: 28px; color: #38bdf8; }
-    .stat-card p { margin: 6px 0 0; color: #94a3b8; font-size: 13px; }
-    .filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .filters select, .filters input { width: auto; margin: 0; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
-    th { color: #94a3b8; font-weight: 600; }
-    td { color: #e2e8f0; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-    .badge.success { background: rgba(34,197,94,0.15); color: #4ade80; }
-    .badge.failed { background: rgba(239,68,68,0.15); color: #f87171; }
-    .badge.pending { background: rgba(234,179,8,0.15); color: #facc15; }
-    .empty { text-align: center; padding: 40px; color: #94a3b8; }
-  </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
-<body>
+<body class="dashboard-body">
   <div class="dashboard">
     <div class="header">
       <div>
-        <h1>Payment Dashboard</h1>
-        <p class="subtitle">Track every payment attempt across Payone, PayTabs and Payzaty</p>
+        <div class="logo" style="text-align:left;margin-bottom:10px">OneShot</div>
+        <h1 style="text-align:left">Payment Dashboard</h1>
+        <p class="subtitle" style="text-align:left">Track every payment attempt across Payone, PayTabs and Payzaty</p>
       </div>
       <a href="/" style="text-decoration:none"><button style="width:auto;padding:10px 18px">New Payment</button></a>
     </div>
